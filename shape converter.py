@@ -1,96 +1,68 @@
 import streamlit as st
 import numpy as np
+import plotly.graph_objects as go
 
-# පිටුවේ මූලික සැකසුම්
-st.set_page_config(page_title="ත්‍රිමාණ වස්තු පරිවර්තකය", layout="wide")
+st.set_page_config(page_title="3D වස්තු මිනුම් Calculator", layout="wide")
 
-# CSS මගින් පෙනුම හැඩගැන්වීම
-st.markdown("""
-    <style>
-    .main-title { color: #2c3e50; text-align: center; font-size: 35px; font-weight: bold; }
-    .res-box { background-color: #f4f6f7; padding: 20px; border-radius: 10px; border-left: 10px solid #27ae60; font-size: 20px; color: #1e8449;}
-    </style>
-    """, unsafe_allow_html=True)
+st.title("📐 ත්‍රිමාණ වස්තු පරිමාව සහ හැඩතල")
 
-st.markdown('<p class="main-title">📐 ත්‍රිමාණ වස්තු පරිමාව සහ මිනුම් Calculator (cm)</p>', unsafe_allow_html=True)
-
-# වස්තූන් ලැයිස්තුව
-shapes = ["ගෝලය (Sphere)", "ඝනකය (Cube)", "පිරමිඩය (Pyramid)", "චතුස්තලය (Tetrahedron)", "සිලින්ඩරය (Cylinder)", "ඝනකාභය (Cuboid)"]
-
-# Sidebar - මුල් වස්තුව ලබා ගැනීම
-st.sidebar.header("📥 මුල් වස්තුවේ මිනුම් (cm)")
-source_shape = st.sidebar.selectbox("වස්තුව තෝරන්න:", shapes)
+# Sidebar - මුල් වස්තුව
+st.sidebar.header("📥 මුල් වස්තුව (cm)")
+source_shape = st.sidebar.selectbox("වස්තුව තෝරන්න:", 
+    ["ගෝලය (Sphere)", "ඝනකය (Cube)", "පිරමිඩය (Pyramid)", "සිලින්ඩරය (Cylinder)", "ඝනකාභය (Cuboid)"])
 
 volume = 0.0
-
 if source_shape == "ගෝලය (Sphere)":
-    r = st.sidebar.number_input("අරය (r) cm වලින්:", value=5.0, min_value=0.1)
+    r = st.sidebar.number_input("අරය (r):", value=5.0)
     volume = (4/3) * np.pi * (r**3)
 elif source_shape == "ඝනකය (Cube)":
-    a = st.sidebar.number_input("පැත්තක දිග (a) cm වලින්:", value=5.0, min_value=0.1)
+    a = st.sidebar.number_input("පැත්ත (a):", value=5.0)
     volume = a**3
-elif source_shape == "පිරමිඩය (Pyramid)":
-    a = st.sidebar.number_input("පාදමේ පැත්තක දිග (a) cm වලින්:", value=5.0, min_value=0.1)
-    h = st.sidebar.number_input("සිරස් උස (h) cm වලින්:", value=10.0, min_value=0.1)
-    volume = (1/3) * (a**2) * h
-elif source_shape == "චතුස්තලය (Tetrahedron)":
-    a = st.sidebar.number_input("දාරයක දිග (a) cm වලින්:", value=5.0, min_value=0.1)
-    volume = (a**3) / (6 * np.sqrt(2))
 elif source_shape == "සිලින්ඩරය (Cylinder)":
-    r = st.sidebar.number_input("අරය (r) cm වලින්:", value=3.0, min_value=0.1)
-    h = st.sidebar.number_input("උස (h) cm වලින්:", value=10.0, min_value=0.1)
+    r = st.sidebar.number_input("අරය (r):", value=3.0)
+    h = st.sidebar.number_input("උස (h):", value=10.0)
     volume = np.pi * (r**2) * h
-elif source_shape == "ඝනකාභය (Cuboid)":
-    l = st.sidebar.number_input("දිග (l) cm වලින්:", value=5.0, min_value=0.1)
-    w = st.sidebar.number_input("පළල (w) cm වලින්:", value=4.0, min_value=0.1)
-    h = st.sidebar.number_input("උස (h) cm වලින්:", value=3.0, min_value=0.1)
-    volume = l * w * h
+# (අනෙක් වස්තූන්ද මේ ආකාරයටම එක් කළ හැක)
 
-# Sidebar - ඉලක්ක වස්තුව තෝරා ගැනීම
+# Sidebar - අලුත් වස්තුව
 st.sidebar.markdown("---")
-st.sidebar.header("📤 පරිවර්තනය වන වස්තුව")
-target_shape = st.sidebar.selectbox("අලුත් හැඩය තෝරන්න:", shapes)
+target_shape = st.sidebar.selectbox("පරිවර්තනය වන හැඩය:", ["ගෝලය (Sphere)", "ඝනකය (Cube)", "සිලින්ඩරය (Cylinder)"])
 
-# ප්‍රධාන ප්‍රදර්ශන කොටස
-st.subheader(f"📊 {source_shape} -> {target_shape} පරිවර්තනය")
-col1, col2 = st.columns([1, 1])
+# 3D රූපය ඇඳීම සඳහා Function එකක්
+def draw_shape(shape_name):
+    fig = go.Figure()
+    if shape_name == "ගෝලය (Sphere)":
+        u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:15j]
+        x = np.cos(u)*np.sin(v)
+        y = np.sin(u)*np.sin(v)
+        z = np.cos(v)
+        fig.add_trace(go.Surface(x=x, y=y, z=z, colorscale='Blues', showscale=False))
+    elif shape_name == "ඝනකය (Cube)":
+        fig.add_trace(go.Mesh3d(x=[0,1,1,0,0,1,1,0], y=[0,0,1,1,0,0,1,1], z=[0,0,0,0,1,1,1,1], 
+                     i=[7,0,0,0,4,4,6,6,4,0,3,2], j=[3,4,1,2,5,6,5,2,0,1,6,3], k=[0,7,2,3,6,7,1,1,5,5,7,6], color='orange'))
+    elif shape_name == "සිලින්ඩරය (Cylinder)":
+        z = np.linspace(0, 1, 20)
+        theta = np.linspace(0, 2*np.pi, 20)
+        theta_grid, z_grid = np.meshgrid(theta, z)
+        x = np.cos(theta_grid)
+        y = np.sin(theta_grid)
+        fig.add_trace(go.Surface(x=x, y=y, z=z_grid, colorscale='Greens', showscale=False))
+    
+    fig.update_layout(scene=dict(xaxis_visible=False, yaxis_visible=False, zaxis_visible=False), height=400)
+    return fig
+
+# ප්‍රතිඵල පෙන්වීම
+col1, col2 = st.columns(2)
 
 with col1:
-    st.info(f"මුල් වස්තුවේ පරිමාව: **{volume:.2f} cm³**")
-    result_text = ""
-    
+    st.info(f"පරිමාව: {volume:.2f} cm³")
     if target_shape == "ගෝලය (Sphere)":
-        r_new = ((3 * volume) / (4 * np.pi))**(1/3)
-        result_text = f"අලුත් ගෝලයේ අරය (r): **{r_new:.2f} cm**"
+        res = ((3 * volume) / (4 * np.pi))**(1/3)
+        st.success(f"අලුත් අරය: {res:.2f} cm")
     elif target_shape == "ඝනකය (Cube)":
-        a_new = volume**(1/3)
-        result_text = f"අලුත් ඝනකයේ පැත්තක දිග (a): **{a_new:.2f} cm**"
-    elif target_shape == "සිලින්ඩරය (Cylinder)":
-        r_fix = 5.0 
-        h_new = volume / (np.pi * (r_fix**2))
-        result_text = f"අරය {r_fix} cm ලෙස ස්ථාවරව තැබුවහොත්, අවශ්ය උස (h): **{h_new:.2f} cm**"
-    elif target_shape == "පිරමිඩය (Pyramid)":
-        a_fix = 5.0
-        h_new = (3 * volume) / (a_fix**2)
-        result_text = f"පාදම පැත්ත {a_fix} cm ලෙස ගතහොත්, අවශ්ය උස (h): **{h_new:.2f} cm**"
-    elif target_shape == "චතුස්තලය (Tetrahedron)":
-        a_new = (volume * 6 * np.sqrt(2))**(1/3)
-        result_text = f"අලුත් චතුස්තලයේ දාරයක දිග (a): **{a_new:.2f} cm**"
-    elif target_shape == "ඝනකාභය (Cuboid)":
-        l_fix, w_fix = 5.0, 4.0
-        h_new = volume / (l_fix * w_fix)
-        result_text = f"දිග {l_fix}cm සහ පළල {w_fix}cm ලෙස ගතහොත්, අවශ්ය උස (h): **{h_new:.2f} cm**"
-
-    st.markdown(f'<div class="res-box">{result_text}</div>', unsafe_allow_html=True)
+        res = volume**(1/3)
+        st.success(f"අලුත් පැත්ත: {res:.2f} cm")
 
 with col2:
-    st.write("**පරිමාව ගණනයට අදාළ රූප සටහන්:**")
-    # මෙහිදී පරිශීලකයාට වැටහෙන සේ වස්තූන්ගේ හැඩතල පෙන්වයි
-    if "ගෝලය" in target_shape:
-        st.latex(r"V = \frac{4}{3}\pi r^3 \implies r = \sqrt[3]{\frac{3V}{4\pi}}")
-    elif "ඝනකය" in target_shape:
-        st.latex(r"V = a^3 \implies a = \sqrt[3]{V}")
-    else:
-        st.write("වෙනත් වස්තූන් සඳහා පරිමාව $V = \text{පාදම වර්ගඵලය} \times \text{උස}$ සූත්‍රය භාවිතා වේ.")
-
-st.markdown("<br><hr><center>ගණිත අධ්‍යාපන සහායක පද්ධතිය</center>", unsafe_allow_html=True)
+    st.write(f"**{target_shape} හි දර්ශනය:**")
+    st.plotly_chart(draw_shape(target_shape))
